@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TokenPay Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "SF Pro Display", "PingFang SC", "Noto Sans SC", sans-serif;
+        background: #f5f7fb;
+        color: #14213d;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 28%),
+          radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 24%),
+          #f5f7fb;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 20px 64px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 40px;
+      }
+      .sub {
+        margin: 0 0 24px;
+        color: #425466;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+      }
+      .label {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+      .value {
+        font-size: 28px;
+        font-weight: 700;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.94);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+      }
+      th, td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      th {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .provider {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #e0f2fe;
+        color: #0369a1;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .muted {
+        color: #64748b;
+        font-size: 13px;
+      }
+      @media (max-width: 720px) {
+        h1 {
+          font-size: 30px;
+        }
+        table, thead, tbody, th, td, tr {
+          display: block;
+        }
+        thead {
+          display: none;
+        }
+        tr {
+          margin-bottom: 14px;
+          border-radius: 16px;
+          overflow: hidden;
+          background: rgba(255, 255, 255, 0.94);
+        }
+        td {
+          border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+        }
+        td::before {
+          content: attr(data-label);
+          display: block;
+          font-size: 12px;
+          color: #64748b;
+          margin-bottom: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>TokenPay</h1>
+      <p class="sub">跨 OpenClaw / Codex / Claude Code 的对话成本观测面板</p>
+      <section class="summary" id="summary"></section>
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Session</th>
+            <th>Input</th>
+            <th>Output</th>
+            <th>USD</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </main>
+    <script>
+      const summaryNode = document.getElementById("summary");
+      const rowsNode = document.getElementById("rows");
+
+      function formatUsd(value) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: value < 0.1 ? 4 : 2,
+          maximumFractionDigits: value < 0.1 ? 4 : 2,
+        }).format(value);
+      }
+
+      function formatTokens(value) {
+        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}m`;
+        if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+        return `${value}`;
+      }
+
+      function renderSummary(summary) {
+        const cards = [
+          ["总费用", formatUsd(summary.totalUsd)],
+          ["总输入", formatTokens(summary.totalInputTokens)],
+          ["总输出", formatTokens(summary.totalOutputTokens)],
+          ["记录数", `${summary.totalEvents}`],
+        ];
+        summaryNode.innerHTML = cards
+          .map(
+            ([label, value]) => `
+              <article class="card">
+                <div class="label">${label}</div>
+                <div class="value">${value}</div>
+              </article>
+            `,
+          )
+          .join("");
+      }
+
+      function renderRows(events) {
+        rowsNode.innerHTML = events
+          .slice(0, 100)
+          .map(
+            (event) => `
+              <tr>
+                <td data-label="Provider"><span class="provider">${event.provider}</span></td>
+                <td data-label="Model">${event.model}</td>
+                <td data-label="Session"><span class="muted">${event.sessionId}</span></td>
+                <td data-label="Input">${formatTokens(event.usage.inputTokens)}</td>
+                <td data-label="Output">${formatTokens(event.usage.outputTokens)}</td>
+                <td data-label="USD">${formatUsd(event.cost.totalUsd)}</td>
+                <td data-label="Time"><span class="muted">${new Date(event.timestamp).toLocaleString()}</span></td>
+              </tr>
+            `,
+          )
+          .join("");
+      }
+
+      async function refresh() {
+        const response = await fetch("/api/events", { cache: "no-store" });
+        const payload = await response.json();
+        renderSummary(payload.summary);
+        renderRows(payload.events);
+      }
+
+      refresh();
+      setInterval(refresh, 3000);
+    </script>
+  </body>
+</html>
+

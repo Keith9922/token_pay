@@ -1,0 +1,21 @@
+{
+  "name": "tokenpay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portable conversation cost observer for OpenClaw, Codex, and Claude Code.",
+  "type": "module",
+  "bin": {
+    "tokenpay": "./dist/src/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "dashboard": "node dist/src/cli.js dashboard",
+    "events": "node dist/src/cli.js events",
+    "footer": "node dist/src/cli.js footer"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2"
+  }
+}

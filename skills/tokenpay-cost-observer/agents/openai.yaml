@@ -1,0 +1,5 @@
+interface:
+  display_name: "TokenPay"
+  short_description: "Estimate chat cost from OpenClaw, Codex, and Claude Code logs"
+  default_prompt: "Use TokenPay to estimate conversation cost, render OpenClaw footer text, or open the local dashboard."
+

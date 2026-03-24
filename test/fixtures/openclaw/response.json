@@ -1,0 +1,12 @@
+{
+  "sessionId": "openclaw-session-1",
+  "messageId": "oc-msg-1",
+  "model": "gpt-5.4",
+  "timestamp": "2026-03-24T08:00:00.000Z",
+  "responseUsage": {
+    "inputTokens": 12000,
+    "cachedInputTokens": 6000,
+    "outputTokens": 900
+  }
+}
+
